@@ -16,18 +16,19 @@ def webhook():
     if not data:
         return jsonify({'status': 'failed', 'message': 'No data received'}), 400
 
-    customer_email = data.get('email', 'No Email Provided')
-    full_name = data.get('first_name', 'No Name Provided')
-    phone = data.get('phone', 'No Phone Provided')
-    city = data.get('city', 'No City Provided')
+    # Extract required fields
+    customer_email = data.get('email')
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
     
-    if 'last_name' in data and data['last_name']:
-        full_name += f" {data['last_name']}"
+    # Validate required fields
+    if not customer_email or not first_name or not last_name:
+        print("Required data missing: email, first name, or last name")
+        return jsonify({'status': 'failed', 'message': 'Required data missing'}), 400
 
-    # Split the full name into first and last name
-    name_parts = full_name.split(' ', 1)
-    first_name = name_parts[0]
-    last_name = name_parts[1] if len(name_parts) > 1 else ""
+    # Optional fields with fallback to empty strings if not provided
+    phone = data.get('phone', '')
+    city = data.get('city', '')
 
     customer = {
         "email": customer_email,
