@@ -30,11 +30,20 @@ def webhook():
         print(f"Error processing request: {e}")
         return jsonify({'error': 'Internal Server Error'}), 500
 
+# Endpoint to retrieve the latest customer
 @app.route('/webhook', methods=['GET'])
 def get_latest_customer():
     if customers:
         latest_customer = customers[-1]  # Return the last customer in the list
         return jsonify(latest_customer), 200
+    else:
+        return jsonify({'error': 'No customers found'}), 404
+
+# New endpoint to retrieve all customers
+@app.route('/get_customers', methods=['GET'])
+def get_customers():
+    if customers:
+        return jsonify(customers), 200
     else:
         return jsonify({'error': 'No customers found'}), 404
 
