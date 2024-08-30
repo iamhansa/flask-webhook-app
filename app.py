@@ -16,19 +16,20 @@ def webhook():
     if not data:
         return jsonify({'status': 'failed', 'message': 'No data received'}), 400
 
-    # Extract required fields
-    customer_email = data.get('email')
-    first_name = data.get('first_name')
-    last_name = data.get('last_name')
+    customer_email = data.get('email', 'No Email Provided')
+    first_name = data.get('first_name', 'No Name Provided')
+    last_name = data.get('last_name', '')
     
-    # Validate required fields
-    if not customer_email or not first_name or not last_name:
-        print("Required data missing: email, first name, or last name")
-        return jsonify({'status': 'failed', 'message': 'Required data missing'}), 400
-
-    # Optional fields with fallback to empty strings if not provided
+    # Retrieve phone and city from billing or shipping address
     phone = data.get('phone', '')
     city = data.get('city', '')
+
+    if 'billing' in data:
+        phone = data['billing'].get('phone', 'No Phone Provided')
+        city = data['billing'].get('city', 'No City Provided')
+    elif 'shipping' in data:
+        phone = data['shipping'].get('phone', 'No Phone Provided')
+        city = data['shipping'].get('city', 'No City Provided')
 
     customer = {
         "email": customer_email,
@@ -39,7 +40,7 @@ def webhook():
     }
 
     # Prevent adding the same customer twice
-    if customer not in customers:
+    if not any(cust['email'] == customer_email for cust in customers):
         customers.append(customer)
         print(f"New customer created: {first_name} {last_name}, Email: {customer_email}, Phone: {phone}, City: {city}")
     else:
