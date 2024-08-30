@@ -2,34 +2,45 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# Store customer data in a simple list for example purposes
-customers = []
-
-@app.route('/')
-def index():
-    return "Hello, Flask is running!"
+# Mock customer data
+customers = [
+    {
+        "first_name": "Kumara",
+        "last_name": "Welgama",
+        "email": "kumarawelgama@gmail.com"
+    },
+    {
+        "first_name": "Manula",
+        "last_name": "Mansa",
+        "email": "manula@mail.com"
+    }
+]
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    data = request.json
-    customer_email = data.get('email', 'No Email Provided')
-    customer_name = data.get('first_name', 'No Name Provided') + " " + data.get('last_name', '')
-    
-    # Save the customer to our list
-    customers.append({
-        'email': customer_email,
-        'name': customer_name,
-        'first_name': data.get('first_name', 'No First Name Provided'),
-        'last_name': data.get('last_name', 'No Last Name Provided')
-    })
+    try:
+        data = request.json
+        if not data:  # If data is None or empty
+            return jsonify({'error': 'No data received'}), 400
 
-    print(f"New customer created: {customer_name}, Email: {customer_email}")
-    return jsonify({'status': 'success'}), 200
+        customer_email = data.get('email', 'No Email Provided')
+        customer_name = data.get('first_name', 'No Name Provided') + " " + data.get('last_name', '')
 
-# Route to fetch customer data
-@app.route('/customers', methods=['GET'])
-def get_customers():
-    return jsonify(customers)
+        # Process data here...
+        print(f"New customer created: {customer_name}, Email: {customer_email}")
+        
+        return jsonify({'status': 'success'}), 200
+    except Exception as e:
+        print(f"Error processing request: {e}")
+        return jsonify({'error': 'Internal Server Error'}), 500
+
+@app.route('/webhook', methods=['GET'])
+def get_latest_customer():
+    if customers:
+        latest_customer = customers[-1]  # Return the last customer in the list
+        return jsonify(latest_customer), 200
+    else:
+        return jsonify({'error': 'No customers found'}), 404
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    app.run(debug=True)
