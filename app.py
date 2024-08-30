@@ -2,33 +2,29 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# Mock customer data
-customers = [
-    {
-        "first_name": "Kumara",
-        "last_name": "Welgama",
-        "email": "kumarawelgama@gmail.com"
-    },
-    {
-        "first_name": "Manula",
-        "last_name": "Mansa",
-        "email": "manula@mail.com"
-    }
-]
+# Mock customer data storage
+customers = []
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
     try:
         data = request.json
-        if not data:  # If data is None or empty
+        if not data:
             return jsonify({'error': 'No data received'}), 400
 
         customer_email = data.get('email', 'No Email Provided')
         customer_name = data.get('first_name', 'No Name Provided') + " " + data.get('last_name', '')
 
-        # Process data here...
+        # Log the data received for debugging purposes
         print(f"New customer created: {customer_name}, Email: {customer_email}")
-        
+
+        # Store the customer in the mock list for GET requests
+        customers.append({
+            'first_name': data.get('first_name', 'No Name Provided'),
+            'last_name': data.get('last_name', ''),
+            'email': data.get('email', 'No Email Provided')
+        })
+
         return jsonify({'status': 'success'}), 200
     except Exception as e:
         print(f"Error processing request: {e}")
