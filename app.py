@@ -2,50 +2,61 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# Mock customer data storage
 customers = []
+
+@app.route('/')
+def index():
+    return "Flask app is running!"
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    try:
-        data = request.json
-        if not data:
-            return jsonify({'error': 'No data received'}), 400
+    data = request.json
+    print(f"Received data: {data}")  # Log the entire payload for debugging
 
-        customer_email = data.get('email', 'No Email Provided')
-        customer_name = data.get('first_name', 'No Name Provided') + " " + data.get('last_name', '')
+    customer_email = data.get('email', 'No Email Provided')
+    full_name = data.get('first_name', 'No Name Provided')
+    
+    if 'last_name' in data and data['last_name']:
+        full_name += f" {data['last_name']}"
 
-        # Log the data received for debugging purposes
-        print(f"New customer created: {customer_name}, Email: {customer_email}")
+    # Split the full name into first and last name
+    name_parts = full_name.split(' ', 1)
+    first_name = name_parts[0]
+    last_name = name_parts[1] if len(name_parts) > 1 else ""
 
-        # Store the customer in the mock list for GET requests
-        customers.append({
-            'first_name': data.get('first_name', 'No Name Provided'),
-            'last_name': data.get('last_name', ''),
-            'email': data.get('email', 'No Email Provided')
-        })
+    customer = {
+        "email": customer_email,
+        "first_name": first_name,
+        "last_name": last_name
+    }
 
-        return jsonify({'status': 'success'}), 200
-    except Exception as e:
-        print(f"Error processing request: {e}")
-        return jsonify({'error': 'Internal Server Error'}), 500
+    customers.append(customer)
+    print(f"New customer created: {first_name} {last_name}, Email: {customer_email}")
 
-# Endpoint to retrieve the latest customer
-@app.route('/webhook', methods=['GET'])
-def get_latest_customer():
-    if customers:
-        latest_customer = customers[-1]  # Return the last customer in the list
-        return jsonify(latest_customer), 200
-    else:
-        return jsonify({'error': 'No customers found'}), 404
+    return jsonify({'status': 'success'}), 200
 
-# New endpoint to retrieve all customers
 @app.route('/get_customers', methods=['GET'])
 def get_customers():
-    if customers:
-        return jsonify(customers), 200
-    else:
-        return jsonify({'error': 'No customers found'}), 404
+    processed_customers = []
+    
+    for customer in customers:
+        full_name = customer.get('first_name', 'No Name Provided')
+        
+        if 'last_name' in customer and customer['last_name']:
+            full_name += f" {customer['last_name']}"
+        
+        # Split the full name into first and last name
+        name_parts = full_name.split(' ', 1)
+        first_name = name_parts[0]
+        last_name = name_parts[1] if len(name_parts) > 1 else ""
+        
+        processed_customers.append({
+            "first_name": first_name,
+            "last_name": last_name,
+            "email": customer.get('email', 'No Email Provided')
+        })
+    
+    return jsonify(processed_customers), 200
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
